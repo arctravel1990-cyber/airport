@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機場接送費用計算與報價</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #1a1a1a;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .form-section {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        select, input[type="text"], textarea, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .price-note, .vehicle-details {
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+        .line-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .line-link a {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #00c300;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .line-link a:hover {
+            background-color: #009900;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>機場接送費用計算</h1>
+    
+    <div class="form-section">
+        <div class="form-group">
+            <label for="tripMode">選擇接送模式：</label>
+            <select id="tripMode" onchange="updateLabels()">
+                <option value="pickup">接機/港口出發 (到地址)</option>
+                <option value="dropoff" selected>地址出發 (到機場/港口)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label id="startLabel" for="startLocation">出發地 (縣市)：</label>
+            <select id="startLocation" onchange="calculatePrice()">
+                <option value="">請選擇</option>
+                <option value="台北市">台北市</option>
+                <option value="新北市">新北市</option>
+                <option value="基隆市">基隆市</option>
+                <option value="桃園市">桃園市</option>
+                <option value="新竹市">新竹市</option>
+                <option value="新竹縣">新竹縣</option>
+                <option value="苗栗縣">苗栗縣</option>
+                <option value="台中市">台中市</option>
+                <option value="彰化縣">彰化縣</option>
+                <option value="南投縣">南投縣</option>
+                <option value="雲林縣">雲林縣</option>
+                <option value="嘉義市">嘉義市</option>
+                <option value="嘉義縣">嘉義縣</option>
+                <option value="台南市">台南市</option>
+                <option value="高雄市">高雄市</option>
+                <option value="屏東縣">屏東縣</option>
+                <option value="宜蘭縣">宜蘭縣</option>
+                <option value="花蓮縣">花蓮縣</option>
+                <option value="台東縣">台東縣</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label id="endLabel" for="endLocation">目的地 (機場/港口)：</label>
+            <select id="endLocation" onchange="calculatePrice()">
+                <option value="">請選擇</option>
+                <option value="桃園機場">桃園機場</option>
+                <option value="小港機場">小港機場</option>
+                <option value="松山機場">松山機場</option>
+                <option value="清泉崗機場">清泉崗機場</option>
+                <option value="基隆港">基隆港</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="carType">車型選擇：</label>
+            <select id="carType" onchange="calculatePrice(); updateCarDetails()">
+                <option value="5_seater">5人座休旅/轎車</option>
+                <option value="imported_5_seater">進口5人座</option>
+                <option value="6_7_9_seater">6、7、9人座</option>
+                <option value="imported_6_7_8_seater">進口6、7、8人座</option>
+            </select>
+        </div>
+        
+        <div class="vehicle-details" id="vehicleDetails">
+            <p><strong>5人座休旅/轎車：</strong></p>
+            <ul>
+                <li>人數限制：最多4人。</li>
+                <li>行李限制：20-23吋(4件) / 23-25吋(3件) / 28-29吋(2件)。</li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label>額外加價項目：</label>
+            <div class="checkbox-group">
+                <input type="checkbox" id="remoteArea" onchange="calculatePrice()">
+                <label for="remoteArea">偏遠地區加價 (一律加300元)</label>
+            </div>
+            <div class="checkbox-group" style="margin-top: 10px;">
+                <input type="checkbox" id="safetySeat" onchange="calculatePrice()">
+                <label for="safetySeat">安全座椅/增高墊加購 (加300元)</label>
+            </div>
+        </div>
+
+        <div class="result" id="priceResult">
+            請選擇出發地與目的地以計算費用
+        </div>
+        
+        <div class="price-note">
+            <p style="color: #d9534f; font-weight: bold;">*此為預估車資，實際需填寫表單後由專人報價。</p>
+            <p><strong>費用說明：</strong></p>
+            <ul>
+                <li><strong>山區加價：</strong>5公里內加價300元，超過5公里每公里加收25元。</li>
+                <li><strong>偏遠地區加價：</strong>一律加收300元。</li>
+                <li><strong>行程加點：</strong>5公里內不額外收費，超過5公里每公里加收25元。</li>
+            </ul>
+        </div>
+        
+        <h3>偏遠地區列表：</h3>
+        <div class="price-note">
+            <p><strong>台北：</strong>士林區（仰德大道三段以上）</p>
+            <p><strong>新北：</strong>深坑區、八里區、淡水區、石碇區、三芝區、汐止區、烏來區、新店區（安康路二段以上、花園新城）、金山區、瑞芳區、貢寮區、坪林區、石門區、萬里區、雙溪區、平溪區</p>
+            <p><strong>桃園：</strong>楊梅區、新屋區、龍潭區、大溪區、復興區</p>
+            <p><strong>新竹：</strong>南寮、香山區、北埔鄉、橫山鄉、峨眉鄉、芎林鄉、尖石鄉、五峰鄉</p>
+            <p><strong>苗栗：</strong>獅潭鄉、卓蘭鎮、大湖鄉、苑裡鎮、泰安鄉、南庄鄉</p>
+            <p><strong>台中：</strong>大安區、新社區、和平區、東勢區</p>
+            <p><strong>彰化：</strong>大城鄉、芳苑鄉、二林鎮、田中鎮、二水鄉、竹塘鄉、伸港鄉、社頭鄉、溪州鄉、秀水鄉</p>
+            <p><strong>南投：</strong>鹿谷鄉、水里鄉、國姓鄉、魚池鄉、仁愛鄉、信義鄉</p>
+            <p><strong>雲林：</strong>林內鄉、古坑鄉、褒忠鄉、元長鄉、北港鎮、莿桐鄉、四湖鄉、台西鄉、東勢鄉、麥寮鄉、崙背鄉、口湖鄉、水林鄉</p>
+            <p><strong>嘉義：</strong>中埔鄉、大林鎮、六腳鄉、新港鄉、溪口鄉、梅山鄉、義竹鄉、布袋鎮、東石鄉、番路鄉、大埔鄉、阿里山鄉</p>
+            <p><strong>台南：</strong>安平區、關廟區、龍崎區、六甲區、將軍區、七股區、北門區、白河區、東山區、柳營區、鹽水區、新營區、後壁區、玉井區、左鎮區、南化區、楠西區</p>
+            <p><strong>高雄：</strong>茄萣區、永安區、彌陀區、阿蓮區、田寮區、路竹區、湖內區、大寮區、旗津區、林園區、杉林區、內門區、六龜區、甲仙區、美濃區、茂林區、桃源區、那瑪夏區</p>
+            <p><strong>屏東：</strong>瑪家鄉、新埤鄉、林邊鄉、東港鎮、南州鄉、佳冬鄉、枋寮鄉、來義鄉、泰武鄉、三地門鄉、枋山鄉、車城鄉、春日鄉、霧台鄉、獅子鄉、恆春鎮、牡丹鄉、滿州鄉</p>
+            <p><strong>宜蘭：</strong>冬山鄉、三星鄉、蘇澳鎮、南澳鄉、大同鄉</p>
+            <p><strong>花蓮：</strong>萬榮鄉、瑞穗鄉、豐濱鄉、鳳林鎮、富里鄉、卓溪鄉、玉里鎮、秀林鄉（天祥、太魯閣）</p>
+            <p><strong>台東：</strong>東河鄉、成功鎮、池上鄉、關山鎮、達仁鄉、大武鄉、金峰鄉、延平鄉、太麻里鄉、卑南鄉、長濱鄉、海端鄉</p>
+        </div>
+    </div>
+    
+    <h2>報價服務</h2>
+    <p>請填寫以下表單，我們將儘快為您提供精確報價。</p>
+    <div class="form-section">
+        <form id="quoteForm" onsubmit="sendEmail(event)">
+            <div class="form-group">
+                <label for="name">姓名：</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">聯絡電話：</label>
+                <input type="text" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="address">詳細地址：</label>
+                <input type="text" id="address" name="address" placeholder="請輸入詳細地址以利報價" required>
+            </div>
+            <div class="form-group">
+                <label for="passengers">乘客人數：</label>
+                <input type="number" id="passengers" name="passengers" min="1" required>
+            </div>
+             <div class="form-group">
+                <label for="luggage">行李件數：</label>
+                <input type="text" id="luggage" name="luggage" placeholder="例如：29吋2件, 25吋2件" required>
+            </div>
+            <div class="form-group">
+                <label for="memberId">會員帳號：</label>
+                <input type="text" id="memberId" name="memberId">
+            </div>
+            <div class="form-group">
+                <label for="couponCode">優惠券代碼：</label>
+                <input type="text" id="couponCode" name="couponCode">
+                <p class="price-note">備註：會員折扣及優惠券將於專人報價時確認。</p>
+            </div>
+            <div class="form-group">
+                <label for="specialRequests">特殊需求：</label>
+                <textarea id="specialRequests" name="specialRequests" rows="4"></textarea>
+            </div>
+            <button type="submit" class="submit-btn">送出報價需求</button>
+        </form>
+    </div>
+    
+    <div class="line-link">
+        <h2>點擊連結加入LINE</h2>
+        <p>點擊下方按鈕，聯繫我們，獲得更精準的報價與服務！</p>
+        <a href="https://lin.ee/aTFXPnu" target="_blank">加入 LINE 好友</a>
+    </div>
+</div>
+
+<script>
+    const prices = {
+        "台北市": {"桃園機場": 1350, "小港機場": 9000, "松山機場": 880, "清泉崗機場": 4250, "基隆港": 1200},
+        "新北市": {"桃園機場": 1350, "小港機場": 9000, "松山機場": 880, "清泉崗機場": 4250, "基隆港": 1200},
+        "基隆市": {"桃園機場": 1520, "小港機場": 9400, "松山機場": 1200, "清泉崗機場": 4600, "基隆港": 900},
+        "桃園市": {"桃園機場": 880, "小港機場": 8000, "松山機場": 1200, "清泉崗機場": 2800, "基隆港": 1450},
+        "新竹市": {"桃園機場": 1670, "小港機場": 6400, "松山機場": 2080, "清泉崗機場": 2240, "基隆港": 2550},
+        "新竹縣": {"桃園機場": 1670, "小港機場": 6400, "松山機場": 2080, "清泉崗機場": 2240, "基隆港": 2550},
+        "苗栗縣": {"桃園機場": 2400, "小港機場": 5500, "松山機場": 3200, "清泉崗機場": 1680, "基隆港": 3050},
+        "台中市": {"桃園機場": 2800, "小港機場": 4400, "松山機場": 3600, "清泉崗機場": 1120, "基隆港": 3750},
+        "彰化縣": {"桃園機場": 2900, "小港機場": 4000, "松山機場": 4000, "清泉崗機場": 1520, "基隆港": 4100},
+        "南投縣": {"桃園機場": 3520, "小港機場": 4400, "松山機場": 4160, "清泉崗機場": 1840, "基隆港": 4350},
+        "雲林縣": {"桃園機場": 4500, "小港機場": 3440, "松山機場": 4640, "清泉崗機場": 2400, "基隆港": 5000},
+        "嘉義市": {"桃園機場": 5440, "小港機場": 3200, "松山機場": 7600, "清泉崗機場": 2960, "基隆港": 6650},
+        "嘉義縣": {"桃園機場": 5440, "小港機場": 3200, "松山機場": 7600, "清泉崗機場": 2960, "基隆港": 6650},
+        "台南市": {"桃園機場": 6000, "小港機場": 2000, "松山機場": 8150, "清泉崗機場": 3650, "基隆港": 7100},
+        "高雄市": {"桃園機場": 6560, "小港機場": 990, "松山機場": 9000, "清泉崗機場": 4650, "基隆港": 7750},
+        "屏東縣": {"桃園機場": 8400, "小港機場": 1840, "松山機場": 11000, "清泉崗機場": 5500, "基隆港": "-"},
+        "宜蘭縣": {"桃園機場": 2480, "小港機場": 10500, "松山機場": 1920, "清泉崗機場": 5650, "基隆港": 1700},
+        "花蓮縣": {"桃園機場": 6800, "小港機場": 11600, "松山機場": 7500, "清泉崗機場": 9900, "基隆港": "-"},
+        "台東縣": {"桃園機場": 8800, "小港機場": 6240, "松山機場": 9800, "清泉崗機場": 11150, "基隆港": "-"}
+    };
+
+    const carSurcharges = {
+        "5_seater": 0,
+        "imported_5_seater": 300,
+        "6_7_9_seater": 300,
+        "imported_6_7_8_seater": 600,
+    };
+    
+    const carDetails = {
+        "5_seater": {
+            title: "5人座休旅/轎車",
+            passengers: "最多4人",
+            luggage: "20-23吋(4件) / 23-25吋(3件) / 28-29吋(2件)"
+        },
+        "imported_5_seater": {
+            title: "進口5人座",
+            passengers: "最多4人",
+            luggage: "20-23吋(4件) / 23-25吋(3件) / 28-29吋(2件)"
+        },
+        "6_7_9_seater": {
+            title: "6、7、9人座",
+            passengers: "依車型 (6、7、9人)",
+            luggage: "20-23吋(8件) / 23-25吋(8件) / 28-29吋(6件)"
+        },
+        "imported_6_7_8_seater": {
+            title: "進口6、7、8人座",
+            passengers: "依車型 (6、7、8人)",
+            luggage: "20-23吋(8件) / 23-25吋(8件) / 28-29吋(6件)"
+        }
+    };
+
+    function updateLabels() {
+        const tripMode = document.getElementById("tripMode").value;
+        const startLabel = document.getElementById("startLabel");
+        const endLabel = document.getElementById("endLabel");
+
+        if (tripMode === "pickup") {
+            startLabel.textContent = "出發地 (機場/港口)：";
+            endLabel.textContent = "目的地 (縣市)：";
+            
+            document.getElementById("startLocation").innerHTML = `
+                <option value="">請選擇</option>
+                <option value="桃園機場">桃園機場</option>
+                <option value="小港機場">小港機場</option>
+                <option value="松山機場">松山機場</option>
+                <option value="清泉崗機場">清泉崗機場</option>
+                <option value="基隆港">基隆港</option>
+            `;
+            document.getElementById("endLocation").innerHTML = `
+                <option value="">請選擇</option>
+                <option value="台北市">台北市</option>
+                <option value="新北市">新北市</option>
+                <option value="基隆市">基隆市</option>
+                <option value="桃園市">桃園市</option>
+                <option value="新竹市">新竹市</option>
+                <option value="新竹縣">新竹縣</option>
+                <option value="苗栗縣">苗栗縣</option>
+                <option value="台中市">台中市</option>
+                <option value="彰化縣">彰化縣</option>
+                <option value="南投縣">南投縣</option>
+                <option value="雲林縣">雲林縣</option>
+                <option value="嘉義市">嘉義市</option>
+                <option value="嘉義縣">嘉義縣</option>
+                <option value="台南市">台南市</option>
+                <option value="高雄市">高雄市</option>
+                <option value="屏東縣">屏東縣</option>
+                <option value="宜蘭縣">宜蘭縣</option>
+                <option value="花蓮縣">花蓮縣</option>
+                <option value="台東縣">台東縣</option>
+            `;
+        } else {
+            startLabel.textContent = "出發地 (縣市)：";
+            endLabel.textContent = "目的地 (機場/港口)：";
+            
+            document.getElementById("startLocation").innerHTML = `
+                <option value="">請選擇</option>
+                <option value="台北市">台北市</option>
+                <option value="新北市">新北市</option>
+                <option value="基隆市">基隆市</option>
+                <option value="桃園市">桃園市</option>
+                <option value="新竹市">新竹市</option>
+                <option value="新竹縣">新竹縣</option>
+                <option value="苗栗縣">苗栗縣</option>
+                <option value="台中市">台中市</option>
+                <option value="彰化縣">彰化縣</option>
+                <option value="南投縣">南投縣</option>
+                <option value="雲林縣">雲林縣</option>
+                <option value="嘉義市">嘉義市</option>
+                <option value="嘉義縣">嘉義縣</option>
+                <option value="台南市">台南市</option>
+                <option value="高雄市">高雄市</option>
+                <option value="屏東縣">屏東縣</option>
+                <option value="宜蘭縣">宜蘭縣</option>
+                <option value="花蓮縣">花蓮縣</option>
+                <option value="台東縣">台東縣</option>
+            `;
+            document.getElementById("endLocation").innerHTML = `
+                <option value="">請選擇</option>
+                <option value="桃園機場">桃園機場</option>
+                <option value="小港機場">小港機場</option>
+                <option value="松山機場">松山機場</option>
+                <option value="清泉崗機場">清泉崗機場</option>
+                <option value="基隆港">基隆港</option>
+            `;
+        }
+        calculatePrice();
+    }
+    
+    function calculatePrice() {
+        const startLocation = document.getElementById("startLocation").value;
+        const endLocation = document.getElementById("endLocation").value;
+        const tripMode = document.getElementById("tripMode").value;
+        const carType = document.getElementById("carType").value;
+        const remoteArea = document.getElementById("remoteArea").checked;
+        const safetySeat = document.getElementById("safetySeat").checked;
+        const resultDiv = document.getElementById("priceResult");
+        
+        let basePrice = null;
+        let startName = startLocation;
+        let endName = endLocation;
+        
+        if (tripMode === "dropoff") {
+            if (prices[startLocation] && prices[startLocation][endLocation]) {
+                basePrice = prices[startLocation][endLocation];
+            }
+        } else {
+            if (prices[endLocation] && prices[endLocation][startLocation]) {
+                 basePrice = prices[endLocation][startLocation];
+            }
+            startName = endLocation;
+            endName = startLocation;
+        }
+
+        if (basePrice === null || startLocation === "" || endLocation === "") {
+            resultDiv.innerHTML = "請選擇出發地與目的地以計算費用";
+            resultDiv.style.backgroundColor = "#e9f5e9";
+            return;
+        }
+
+        if (basePrice === "-") {
+            resultDiv.innerHTML = `從 <strong>${startName}</strong> 到 <strong>${endName}</strong> 的費用：<strong>請另外報價</strong>`;
+            resultDiv.style.backgroundColor = "#fff3cd";
+            return;
+        }
+
+        let finalPrice = parseInt(basePrice);
+        let surcharges = [];
+
+        // Add car type surcharge
+        if (carSurcharges[carType] > 0) {
+            finalPrice += carSurcharges[carType];
+            surcharges.push(`車型加價: ${carSurcharges[carType]} 元`);
+        }
+
+        // Add remote area surcharge
+        if (remoteArea) {
+            finalPrice += 300;
+            surcharges.push("偏遠地區加價: 300 元");
+        }
+
+        // Add safety seat surcharge
+        if (safetySeat) {
+            finalPrice += 300;
+            surcharges.push("安全座椅/增高墊加價: 300 元");
+        }
+        
+        let surchargeText = "";
+        if (surcharges.length > 0) {
+            surchargeText = `<br><span style="font-size:14px; font-weight:normal;">(${surcharges.join(' + ')})</span>`;
+        }
+
+        resultDiv.innerHTML = `從 <strong>${startName}</strong> 到 <strong>${endName}</strong> 的預估費用：<br><strong>新台幣 ${finalPrice} 元</strong>${surchargeText}`;
+        resultDiv.style.backgroundColor = "#d4edda";
+    }
+
+    function updateCarDetails() {
+        const carType = document.getElementById("carType").value;
+        const details = carDetails[carType];
+        const detailsDiv = document.getElementById("vehicleDetails");
+        
+        detailsDiv.innerHTML = `
+            <p><strong>${details.title}：</strong></p>
+            <ul>
+                <li>人數限制：${details.passengers}。</li>
+                <li>行李限制：${details.luggage}。</li>
+            </ul>
+        `;
+    }
+
+    function sendEmail(event) {
+        event.preventDefault();
+
+        const tripMode = document.getElementById("tripMode").value === 'pickup' ? '接機/港口出發' : '地址出發';
+        const start = document.getElementById("startLocation").value;
+        const end = document.getElementById("endLocation").value;
+        const carType = document.getElementById("carType").options[document.getElementById("carType").selectedIndex].text;
+        const remoteArea = document.getElementById("remoteArea").checked ? '是' : '否';
+        const safetySeat = document.getElementById("safetySeat").checked ? '是' : '否';
+        const name = document.getElementById("name").value;
+        const phone = document.getElementById("phone").value;
+        const address = document.getElementById("address").value;
+        const passengers = document.getElementById("passengers").value;
+        const luggage = document.getElementById("luggage").value;
+        const memberId = document.getElementById("memberId").value || '無';
+        const couponCode = document.getElementById("couponCode").value || '無';
+        const specialRequests = document.getElementById("specialRequests").value || '無';
+        const estimatedPrice = document.getElementById("priceResult").innerText;
+
+        const subject = encodeURIComponent('機場接送報價需求 - ' + name);
+        const body = encodeURIComponent(
+            `親愛的ARC Travel，您好：\n\n` +
+            `我需要機場接送報價，詳細資訊如下：\n\n` +
+            `===================================\n` +
+            `旅程類型：${tripMode}\n` +
+            `出發地：${start}\n` +
+            `目的地：${end}\n` +
+            `詳細地址：${address}\n` +
+            `車型：${carType}\n` +
+            `偏遠地區：${remoteArea}\n` +
+            `安全座椅：${safetySeat}\n` +
+            `乘客人數：${passengers}\n` +
+            `行李件數：${luggage}\n` +
+            `特殊需求：${specialRequests}\n\n` +
+            `會員帳號：${memberId}\n` +
+            `優惠券代碼：${couponCode}\n` +
+            `-----------------------------------\n` +
+            `聯絡人姓名：${name}\n` +
+            `聯絡電話：${phone}\n\n` +
+            `${estimatedPrice}\n\n` +
+            `請儘快與我聯繫，謝謝！`
+        );
+
+        window.location.href = `mailto:ARC.travel1990@Gmail.com?subject=${subject}&body=${body}`;
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        updateLabels();
+        updateCarDetails();
+    });
+
+</script>
+
+</body>
+</html>
