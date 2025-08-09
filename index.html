@@ -102,6 +102,29 @@
         .submit-btn:hover {
             background-color: #0056b3;
         }
+        .item-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .item-row label {
+            margin-bottom: 0;
+            flex: 1;
+        }
+        .item-row input[type="number"] {
+            width: 80px;
+            margin-left: 10px;
+            text-align: center;
+        }
+        .special-luggage-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .special-luggage-group .checkbox-group {
+            flex-grow: 1;
+        }
     </style>
 </head>
 <body>
@@ -175,14 +198,19 @@
         </div>
 
         <div class="form-group">
-            <label>額外加價項目：</label>
+            <label>額外選項：</label>
             <div class="checkbox-group">
                 <input type="checkbox" id="remoteArea" onchange="calculatePrice()">
-                <label for="remoteArea">偏遠地區加價 (一律加300元)</label>
+                <label for="remoteArea">是否偏遠地區/山區</label>
             </div>
-            <div class="checkbox-group" style="margin-top: 10px;">
-                <input type="checkbox" id="safetySeat" onchange="calculatePrice()">
-                <label for="safetySeat">安全座椅/增高墊加購 (加300元)</label>
+            
+            <div class="item-row">
+                <label for="carSeats">安全座椅數量：</label>
+                <input type="number" id="carSeats" value="0" min="0" onchange="calculatePrice()">
+            </div>
+            <div class="item-row" style="margin-top: 5px;">
+                <label for="boosterSeats">增高墊數量：</label>
+                <input type="number" id="boosterSeats" value="0" min="0" onchange="calculatePrice()">
             </div>
         </div>
 
@@ -192,12 +220,6 @@
         
         <div class="price-note">
             <p style="color: #d9534f; font-weight: bold;">*此為預估車資，實際需填寫表單後由專人報價。</p>
-            <p><strong>費用說明：</strong></p>
-            <ul>
-                <li><strong>山區加價：</strong>5公里內加價300元，超過5公里每公里加收25元。</li>
-                <li><strong>偏遠地區加價：</strong>一律加收300元。</li>
-                <li><strong>行程加點：</strong>5公里內不額外收費，超過5公里每公里加收25元。</li>
-            </ul>
         </div>
         
         <h3>偏遠地區列表：</h3>
@@ -246,6 +268,28 @@
                 <input type="text" id="luggage" name="luggage" placeholder="例如：29吋2件, 25吋2件" required>
             </div>
             <div class="form-group">
+                <label>特殊行李選項：</label>
+                <div class="special-luggage-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="oversizedLuggage" name="specialLuggage">
+                        <label for="oversizedLuggage">超大件行李</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="golfBag" name="specialLuggage">
+                        <label for="golfBag">高爾夫球袋</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="cardboardBox" name="specialLuggage">
+                        <label for="cardboardBox">紙箱</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="nonStandard" name="specialLuggage">
+                        <label for="nonStandard">非標準行李尺寸</label>
+                    </div>
+                </div>
+                <textarea id="specialLuggageNotes" name="specialLuggageNotes" rows="2" placeholder="請在此處註明特殊行李的具體尺寸或說明"></textarea>
+            </div>
+            <div class="form-group">
                 <label for="memberId">會員帳號：</label>
                 <input type="text" id="memberId" name="memberId">
             </div>
@@ -255,7 +299,7 @@
                 <p class="price-note">備註：會員折扣及優惠券將於專人報價時確認。</p>
             </div>
             <div class="form-group">
-                <label for="specialRequests">特殊需求：</label>
+                <label for="specialRequests">其他需求：</label>
                 <textarea id="specialRequests" name="specialRequests" rows="4"></textarea>
             </div>
             <button type="submit" class="submit-btn">送出報價需求</button>
@@ -404,8 +448,6 @@
         const endLocation = document.getElementById("endLocation").value;
         const tripMode = document.getElementById("tripMode").value;
         const carType = document.getElementById("carType").value;
-        const remoteArea = document.getElementById("remoteArea").checked;
-        const safetySeat = document.getElementById("safetySeat").checked;
         const resultDiv = document.getElementById("priceResult");
         
         let basePrice = null;
@@ -444,18 +486,6 @@
             finalPrice += carSurcharges[carType];
             surcharges.push(`車型加價: ${carSurcharges[carType]} 元`);
         }
-
-        // Add remote area surcharge
-        if (remoteArea) {
-            finalPrice += 300;
-            surcharges.push("偏遠地區加價: 300 元");
-        }
-
-        // Add safety seat surcharge
-        if (safetySeat) {
-            finalPrice += 300;
-            surcharges.push("安全座椅/增高墊加價: 300 元");
-        }
         
         let surchargeText = "";
         if (surcharges.length > 0) {
@@ -488,12 +518,19 @@
         const end = document.getElementById("endLocation").value;
         const carType = document.getElementById("carType").options[document.getElementById("carType").selectedIndex].text;
         const remoteArea = document.getElementById("remoteArea").checked ? '是' : '否';
-        const safetySeat = document.getElementById("safetySeat").checked ? '是' : '否';
+        const carSeats = document.getElementById("carSeats").value;
+        const boosterSeats = document.getElementById("boosterSeats").value;
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
         const address = document.getElementById("address").value;
         const passengers = document.getElementById("passengers").value;
         const luggage = document.getElementById("luggage").value;
+        
+        const specialLuggageChecked = Array.from(document.querySelectorAll('input[name="specialLuggage"]:checked')).map(el => el.labels[0].textContent);
+        const specialLuggageNotes = document.getElementById('specialLuggageNotes').value;
+        const specialLuggageInfo = specialLuggageChecked.length > 0 ? specialLuggageChecked.join('、') : '無';
+        const specialLuggageText = specialLuggageChecked.length > 0 ? specialLuggageInfo + (specialLuggageNotes ? ` (${specialLuggageNotes})` : '') : '無';
+
         const memberId = document.getElementById("memberId").value || '無';
         const couponCode = document.getElementById("couponCode").value || '無';
         const specialRequests = document.getElementById("specialRequests").value || '無';
@@ -509,13 +546,15 @@
             `目的地：${end}\n` +
             `詳細地址：${address}\n` +
             `車型：${carType}\n` +
-            `偏遠地區：${remoteArea}\n` +
-            `安全座椅：${safetySeat}\n` +
+            `是否偏遠地區/山區：${remoteArea}\n` +
+            `安全座椅數量：${carSeats}\n` +
+            `增高墊數量：${boosterSeats}\n` +
             `乘客人數：${passengers}\n` +
             `行李件數：${luggage}\n` +
-            `特殊需求：${specialRequests}\n\n` +
+            `特殊行李：${specialLuggageText}\n` +
             `會員帳號：${memberId}\n` +
             `優惠券代碼：${couponCode}\n` +
+            `其他需求：${specialRequests}\n\n` +
             `-----------------------------------\n` +
             `聯絡人姓名：${name}\n` +
             `聯絡電話：${phone}\n\n` +
